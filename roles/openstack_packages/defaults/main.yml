@@ -1,0 +1,3 @@
+---
+openstack_cloud_archive: ""
+openstack_upgrade_packages: true

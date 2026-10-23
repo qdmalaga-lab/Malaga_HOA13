@@ -1,0 +1,8 @@
+# Managed by Ansible (role: ntp) - compute
+# The controller is the only time source, as in the OpenStack install guide
+server {{ controller_ip }} iburst
+
+driftfile /var/lib/chrony/chrony.drift
+makestep 1.0 3
+rtcsync
+logdir /var/log/chrony

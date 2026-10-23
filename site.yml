@@ -1,0 +1,16 @@
+---
+- hosts: controller
+  become: true
+  roles:
+    - ntp
+    - openstack_packages
+    - database
+    - message_queue
+    - memcached
+    - etcd
+
+- hosts: compute
+  become: true
+  roles:
+    - ntp
+    - openstack_packages

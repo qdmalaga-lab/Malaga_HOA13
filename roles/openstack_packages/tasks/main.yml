@@ -1,0 +1,23 @@
+---
+- name: install software-properties-common (only needed for the Cloud Archive)
+  apt:
+    name: software-properties-common
+    state: present
+    update_cache: yes
+  when: openstack_cloud_archive | length > 0
+
+- name: enable the OpenStack Cloud Archive (only when a release is set)
+  command: "add-apt-repository -y cloud-archive:{{ openstack_cloud_archive }}"
+  changed_when: false
+  when: openstack_cloud_archive | length > 0
+
+- name: upgrade all packages (apt dist-upgrade)
+  apt:
+    upgrade: dist
+    update_cache: yes
+  when: openstack_upgrade_packages | bool
+
+- name: install the OpenStack client
+  apt:
+    name: python3-openstackclient
+    state: present

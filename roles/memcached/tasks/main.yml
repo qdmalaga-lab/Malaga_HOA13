@@ -1,0 +1,34 @@
+---
+- name: install memcached and its python library
+  apt:
+    name:
+      - memcached
+      - python3-memcache
+    state: present
+    update_cache: yes
+
+- name: deploy the memcached configuration
+  template:
+    src: memcached.conf.j2
+    dest: /etc/memcached.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  notify: restart memcached
+
+- name: allow the memcached port from the management network
+  ufw:
+    rule: allow
+    port: "11211"
+    proto: tcp
+    from_ip: "{{ management_network }}"
+
+- name: apply configuration before checking the service
+  meta: flush_handlers
+
+- name: enable and start memcached
+  systemd:
+    name: memcached
+    state: started
+    enabled: yes

@@ -1,0 +1,6 @@
+# Managed by Ansible (role: memcached)
+# Listen on the controller management IP so other nodes can reach it
+-m 64
+-p 11211
+-u memcache
+-l {{ controller_ip }}

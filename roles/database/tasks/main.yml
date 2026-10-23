@@ -1,0 +1,72 @@
+---
+- name: install the database packages
+  apt:
+    name:
+      - mariadb-server
+      - python3-pymysql
+    state: present
+    update_cache: yes
+
+- name: deploy the OpenStack database configuration
+  template:
+    src: 99-openstack.cnf.j2
+    dest: /etc/mysql/mariadb.conf.d/99-openstack.cnf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart mariadb
+
+- name: allow the database port from the management network
+  ufw:
+    rule: allow
+    port: "3306"
+    proto: tcp
+    from_ip: "{{ management_network }}"
+
+- name: apply configuration before securing the database
+  meta: flush_handlers
+
+- name: enable and start mariadb
+  systemd:
+    name: mariadb
+    state: started
+    enabled: yes
+
+- name: set the database root password (first run, socket authentication)
+  community.mysql.mysql_user:
+    name: root
+    host_all: yes
+    password: "{{ mysql_root_password }}"
+    login_unix_socket: /run/mysqld/mysqld.sock
+  register: db_root_socket
+  ignore_errors: true
+
+- name: set the database root password (later runs, password authentication)
+  community.mysql.mysql_user:
+    name: root
+    host_all: yes
+    password: "{{ mysql_root_password }}"
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /run/mysqld/mysqld.sock
+  when: db_root_socket is failed
+
+- name: remove anonymous database users
+  community.mysql.mysql_user:
+    name: ""
+    host: "{{ item }}"
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /run/mysqld/mysqld.sock
+  loop:
+    - localhost
+    - "{{ ansible_facts['hostname'] }}"
+
+- name: remove the test database
+  community.mysql.mysql_db:
+    name: test
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /run/mysqld/mysqld.sock

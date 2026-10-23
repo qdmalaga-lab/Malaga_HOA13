@@ -1,0 +1,11 @@
+# Managed by Ansible (role: ntp) - controller
+# Time source: Ubuntu's public NTP pool
+pool ntp.ubuntu.com iburst maxsources 4
+
+# Let the other OpenStack nodes on the management network sync from here
+allow {{ management_network }}
+
+driftfile /var/lib/chrony/chrony.drift
+makestep 1.0 3
+rtcsync
+logdir /var/log/chrony

@@ -1,0 +1,39 @@
+---
+- name: make sure this is an Ubuntu host (these roles follow the Ubuntu install guide)
+  assert:
+    that: ansible_distribution == "Ubuntu"
+    fail_msg: "These roles are written for Ubuntu hosts."
+    quiet: yes
+
+- name: install chrony
+  apt:
+    name: chrony
+    state: present
+    update_cache: yes
+
+- name: deploy the chrony configuration for this server type
+  template:
+    src: "chrony-{{ ntp_mode }}.conf.j2"
+    dest: /etc/chrony/chrony.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  notify: restart chrony
+
+- name: allow NTP from the management network (controller only)
+  ufw:
+    rule: allow
+    port: "123"
+    proto: udp
+    from_ip: "{{ management_network }}"
+  when: ntp_mode == "controller"
+
+- name: apply configuration before checking the service
+  meta: flush_handlers
+
+- name: enable and start chrony
+  systemd:
+    name: chrony
+    state: started
+    enabled: yes

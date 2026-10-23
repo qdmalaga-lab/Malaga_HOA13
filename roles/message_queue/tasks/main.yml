@@ -1,0 +1,30 @@
+---
+- name: install rabbitmq-server
+  apt:
+    name: rabbitmq-server
+    state: present
+    update_cache: yes
+
+- name: enable and start rabbitmq-server
+  systemd:
+    name: rabbitmq-server
+    state: started
+    enabled: yes
+
+- name: allow the message queue port from the management network
+  ufw:
+    rule: allow
+    port: "5672"
+    proto: tcp
+    from_ip: "{{ management_network }}"
+
+- name: create the openstack message queue user with full permissions
+  community.rabbitmq.rabbitmq_user:
+    user: "{{ rabbit_user }}"
+    password: "{{ rabbit_pass }}"
+    vhost: /
+    configure_priv: ".*"
+    read_priv: ".*"
+    write_priv: ".*"
+    update_password: on_create
+    state: present

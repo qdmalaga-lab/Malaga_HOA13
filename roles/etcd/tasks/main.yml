@@ -1,0 +1,37 @@
+---
+- name: install etcd and its client
+  apt:
+    name:
+      - etcd-server
+      - etcd-client
+    state: present
+    update_cache: yes
+
+- name: deploy the etcd configuration
+  template:
+    src: etcd.j2
+    dest: /etc/default/etcd
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  notify: restart etcd
+
+- name: allow the etcd ports from the management network
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+    from_ip: "{{ management_network }}"
+  loop:
+    - "2379"
+    - "2380"
+
+- name: apply configuration before checking the service
+  meta: flush_handlers
+
+- name: enable and start etcd
+  systemd:
+    name: etcd
+    state: started
+    enabled: yes

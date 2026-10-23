@@ -1,0 +1,5 @@
+---
+ntp_mode: controller
+mysql_root_password: "RootDbPass-ChangeMe"
+rabbit_user: openstack
+rabbit_pass: "RabbitPass-ChangeMe"
